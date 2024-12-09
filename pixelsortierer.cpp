@@ -5,6 +5,7 @@
 #include <string>
 
 #include "lib/stblibs.h"
+#include "oddeven.hpp"
 
 // Function to read an image into a 2D vector of pixels
 std::vector<std::vector<std::vector<unsigned char>>> readImage(const std::string& filepath, int& width, int& height, int& channels)
