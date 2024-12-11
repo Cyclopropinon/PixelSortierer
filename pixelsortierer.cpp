@@ -60,12 +60,13 @@ int Pixelsortierer(int argc, char const *argv[])
 {
     try
     {
-        int width, height, channels, Sortiermethode;
+        int width, height, channels, Sortiermethode, diff;
 
         // Read an image
 //        auto image = readImage("input.png", width, height, channels);
         auto image = readImage(argv[1], width, height, channels);
         std::cout << "Image read successfully! Dimensions: " << width << "x" << height << " Channels: " << channels << std::endl;
+        std::cout << "SSE aktiviert: " << stbi__sse2_available() << std::endl;
 
         /*/ Modify the image (optional): Example - invert colors
         for (auto& row : image)
@@ -82,11 +83,14 @@ int Pixelsortierer(int argc, char const *argv[])
         std::cout << "Sortiermethode: ";
         std::cin >> Sortiermethode;
 
+        std::cout << "Sortierstärke (0 - 255): ";
+        std::cin >> diff;
+
         std::cout << "Sortieren ." << std::flush;
 
         for (auto& row : image)
         {
-            OddEvenSort(row, Sortiermethode);
+            OddEvenSort(row, Sortiermethode, diff);
             std::cout << '.' << std::flush;
         }
 
