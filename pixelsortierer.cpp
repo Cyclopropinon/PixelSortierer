@@ -60,13 +60,14 @@ int Pixelsortierer(int argc, char const *argv[])
 {
     try
     {
-        int width, height, channels;
+        int width, height, channels, Sortiermethode;
 
         // Read an image
-        auto image = readImage("input.png", width, height, channels);
+//        auto image = readImage("input.png", width, height, channels);
+        auto image = readImage(argv[1], width, height, channels);
         std::cout << "Image read successfully! Dimensions: " << width << "x" << height << " Channels: " << channels << std::endl;
 
-        // Modify the image (optional): Example - invert colors
+        /*/ Modify the image (optional): Example - invert colors
         for (auto& row : image)
         {
             for (auto& pixel : row)
@@ -76,11 +77,22 @@ int Pixelsortierer(int argc, char const *argv[])
                     channel = 255 - channel; // Simple inversion
                 }
             }
+        }// */
+
+        std::cout << "Sortiermethode: ";
+        std::cin >> Sortiermethode;
+
+        std::cout << "Sortieren ." << std::flush;
+
+        for (auto& row : image)
+        {
+            OddEvenSort(row, Sortiermethode);
+            std::cout << '.' << std::flush;
         }
 
         // Write the modified image
         writeImage("output.png", image, width, height, channels);
-        std::cout << "Image written successfully to output.png!" << std::endl;
+        std::cout << "\nImage written successfully to output.png!" << std::endl;
 
     } catch (const std::exception& e) {
         std::cerr << e.what() << std::endl;

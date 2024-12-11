@@ -19,6 +19,12 @@ bool compare(const std::vector<unsigned char>& a, const std::vector<unsigned cha
             for (unsigned char val : b) sum_b += val;
             return sum_a > sum_b;
         }
+        case 2:
+        { // Sum of the first 3 numbers
+            int sum_a = a[0] + a[1] + a[2];
+            int sum_b = b[0] + b[1] + b[2];
+            return sum_a > sum_b;
+        }
         default:
             std::cerr << "Invalid comparison method!\n";
             return false;
