@@ -78,8 +78,7 @@ if [ -n "$resolution" ]; then
       ext="${image##*.}"
       base="${image%.*}"
       scaled_image="${base}_scaled.png"
-      if ! ffmpeg -i "$image" -vf "scale='if(gt(iw/ih\,$max_width/$max_height),$max_width,-2)':"\
-"'if(gt(iw/ih\,$max_width/$max_height),-2,$max_height)'" "$scaled_image"; then
+      if ! ffmpeg -i "$image" -vf "scale='if(gt(iw/ih\,$max_width/$max_height),$max_width,-2)':'if(gt(iw/ih\,$max_width/$max_height),-2,$max_height)'" "$scaled_image"; then
         echo "Fehler beim Skalieren von $image."
         exit 1
       fi
@@ -91,7 +90,11 @@ if [ -n "$resolution" ]; then
   images=("${new_images[@]}")
 fi
 
-echo "c"
+# Gebe die aktualisierte Bilderliste aus
+echo "Aktualisierte Bilderliste nach Skalierung:"
+for img in "${images[@]}"; do
+  echo "- $img"
+done
 
 # Schleife durch alle Bilddateien im aktuellen Verzeichnis
 for image in "${images[@]}"; do
