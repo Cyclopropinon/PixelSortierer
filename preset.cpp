@@ -48,18 +48,19 @@ int preset1(int argc, char const *argv[])
         {
             for (auto& row : image)
             {
-                bool changes_made = true; // Track if changes are made during sorting
+                bool changes_made1 = true; // Track if changes are made during sorting
+                //std::cout << 'a' << diff << std::endl;
 
-                while (changes_made)
+                while (changes_made1)
                 {
-                    changes_made = false;
+                    changes_made1 = false;
 
                     bool odd_phase_changes;
                     bool even_phase_changes;
 
                     // Perform the odd phase
                     {
-                        bool changes_made = false;
+                        bool changes_made2 = false;
 
                         // Determine the starting index based on whether it's an odd or even phase
                         int start_index = true ? 1 : 0;
@@ -71,15 +72,17 @@ int preset1(int argc, char const *argv[])
                             if (compare6(row[i], row[i + 1], diff))
                             {
                                 std::swap(row[i], row[i + 1]);
-                                changes_made = true;
+                                changes_made2 = true;
                             }
                         }
-                        odd_phase_changes = changes_made;
+                        odd_phase_changes = changes_made2;
                     }
+
+                    //std::cout << 'b' << std::endl;
 
                     // Perform the even phase
                     {
-                        bool changes_made = false;
+                        bool changes_made2 = false;
 
                         // Determine the starting index based on whether it's an odd or even phase
                         int start_index = false ? 1 : 0;
@@ -91,16 +94,15 @@ int preset1(int argc, char const *argv[])
                             if (compare6(row[i], row[i + 1], diff))
                             {
                                 std::swap(row[i], row[i + 1]);
-                                changes_made = true;
+                                changes_made2 = true;
                             }
                         }
-                        even_phase_changes = changes_made;
+                        even_phase_changes = changes_made2;
                     }
 
                     // Update the flag
-                    changes_made = odd_phase_changes || even_phase_changes;
+                    changes_made1 = odd_phase_changes || even_phase_changes;
                 }
-                return true; // Sorting completed
             }
             // Write the modified image
             writeImage(std::string("outanim_") + std::to_string(diff) + ".png", image, width, height, channels);

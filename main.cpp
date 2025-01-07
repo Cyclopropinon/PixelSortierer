@@ -18,6 +18,7 @@ int main(int argc, char const *argv[])
         return preset1(argc, argv);
         break;
     default:
+        return -2;
         break;
     }
 }
