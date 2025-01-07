@@ -24,7 +24,22 @@ int preset1(int argc, char const *argv[])
         {
             for (auto& row : image)
             {
-                OddEvenSort(row, Sortiermethode, diff);
+                bool changes_made = true; // Track if changes are made during sorting
+
+                while (changes_made)
+                {
+                    changes_made = false;
+
+                    // Perform the odd phase
+                    bool odd_phase_changes = OddEvenSortStep(row, true, Sortiermethode, diff);
+
+                    // Perform the even phase
+                    bool even_phase_changes = OddEvenSortStep(row, false, Sortiermethode, diff);
+
+                    // Update the flag
+                    changes_made = odd_phase_changes || even_phase_changes;
+                }
+                return true; // Sorting completed
             }
             // Write the modified image
             writeImage(std::string("outanim_") + std::to_string(diff) + ".png", image, width, height, channels);
