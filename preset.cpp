@@ -32,9 +32,45 @@ int preset1(int argc, char const *argv[])
 
                     // Perform the odd phase
                     bool odd_phase_changes = OddEvenSortStep(row, true, Sortiermethode, diff);
+                    {
+                        bool changes_made = false;
+
+                        // Determine the starting index based on whether it's an odd or even phase
+                        int start_index = true ? 1 : 0;
+
+                        // Iterate through the array in pairs
+                        for (size_t i = start_index; i + 1 < row.size(); i += 2)
+                        {
+                            // If comparison determines the first is greater, swap
+                            if (compare(row[i], row[i + 1], Sortiermethode, diff))
+                            {
+                                std::swap(row[i], row[i + 1]);
+                                changes_made = true;
+                            }
+                        }
+                        return changes_made;
+                    }
 
                     // Perform the even phase
                     bool even_phase_changes = OddEvenSortStep(row, false, Sortiermethode, diff);
+                    {
+                        bool changes_made = false;
+
+                        // Determine the starting index based on whether it's an odd or even phase
+                        int start_index = false ? 1 : 0;
+
+                        // Iterate through the array in pairs
+                        for (size_t i = start_index; i + 1 < row.size(); i += 2)
+                        {
+                            // If comparison determines the first is greater, swap
+                            if (compare(row[i], row[i + 1], Sortiermethode, diff))
+                            {
+                                std::swap(row[i], row[i + 1]);
+                                changes_made = true;
+                            }
+                        }
+                        return changes_made;
+                    }
 
                     // Update the flag
                     changes_made = odd_phase_changes || even_phase_changes;
