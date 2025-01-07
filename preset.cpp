@@ -4,9 +4,6 @@
 #include <vector>
 #include <string>
 
-#include "lib/stblibs.h"
-#include "oddeven.hpp"
-
 inline bool compare6(const std::vector<unsigned char>& a, const std::vector<unsigned char>& b, int diff)
 {
     long sum_a, sum_b, x, y;

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-g++ main.cpp -o Pixelsortierer
+g++ main.cpp -o Pixelsortierer -O3 -march=native
 
 cp -v Pixelsortierer testumgebung/
 
