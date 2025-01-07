@@ -1,6 +1,7 @@
 #include <cstdlib> // For std::atoi
 
 #include "pixelsortierer.cpp"
+#include "preset.cpp"
 
 int main(int argc, char const *argv[])
 {
@@ -13,6 +14,9 @@ int main(int argc, char const *argv[])
         return PixelsortiererAnimiert(argc, argv);
         break;
     
+    case -1:
+        return preset1(argc, argv);
+        break;
     default:
         break;
     }
