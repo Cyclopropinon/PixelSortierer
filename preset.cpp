@@ -7,6 +7,33 @@
 #include "lib/stblibs.h"
 #include "oddeven.hpp"
 
+inline bool compare6(const std::vector<unsigned char>& a, const std::vector<unsigned char>& b, int diff)
+{
+    long sum_a, sum_b, x, y;
+    { // Sum of the first 3 numbers, with per-channel diff check
+        sum_a = a[0] + a[1] + a[2];
+        sum_b = b[0] + b[1] + b[2];
+        if(sum_a > sum_b)
+        {
+            x = a[0] - b[0];
+            if(x < 0) x = -x;
+            if(x > diff) return false;
+            
+            x = a[1] - b[1];
+            if(x < 0) x = -x;
+            if(x > diff) return false;
+            
+            x = a[2] - b[2];
+            if(x < 0) x = -x;
+            if(x > diff) return false;
+            
+            return true;
+        } else {
+            return false;
+        }
+    }
+}
+
 int preset1(int argc, char const *argv[])
 {
     try
@@ -30,8 +57,10 @@ int preset1(int argc, char const *argv[])
                 {
                     changes_made = false;
 
+                    bool odd_phase_changes;
+                    bool even_phase_changes;
+
                     // Perform the odd phase
-                    bool odd_phase_changes = OddEvenSortStep(row, true, Sortiermethode, diff);
                     {
                         bool changes_made = false;
 
@@ -42,17 +71,16 @@ int preset1(int argc, char const *argv[])
                         for (size_t i = start_index; i + 1 < row.size(); i += 2)
                         {
                             // If comparison determines the first is greater, swap
-                            if (compare(row[i], row[i + 1], Sortiermethode, diff))
+                            if (compare6(row[i], row[i + 1], diff))
                             {
                                 std::swap(row[i], row[i + 1]);
                                 changes_made = true;
                             }
                         }
-                        return changes_made;
+                        odd_phase_changes = changes_made;
                     }
 
                     // Perform the even phase
-                    bool even_phase_changes = OddEvenSortStep(row, false, Sortiermethode, diff);
                     {
                         bool changes_made = false;
 
@@ -63,13 +91,13 @@ int preset1(int argc, char const *argv[])
                         for (size_t i = start_index; i + 1 < row.size(); i += 2)
                         {
                             // If comparison determines the first is greater, swap
-                            if (compare(row[i], row[i + 1], Sortiermethode, diff))
+                            if (compare6(row[i], row[i + 1], diff))
                             {
                                 std::swap(row[i], row[i + 1]);
                                 changes_made = true;
                             }
                         }
-                        return changes_made;
+                        even_phase_changes = changes_made;
                     }
 
                     // Update the flag
