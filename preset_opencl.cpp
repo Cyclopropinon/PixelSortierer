@@ -1,120 +1,135 @@
 #pragma once
 
+#define CL_TARGET_OPENCL_VERSION 120
+#include <CL/cl.h>
 #include <iostream>
+#include <fstream>
 #include <vector>
 #include <string>
 
-inline bool compare6(const std::vector<unsigned char>& a, const std::vector<unsigned char>& b, int diff)
-{
-    long sum_a, sum_b, x, y;
-    { // Sum of the first 3 numbers, with per-channel diff check
-        sum_a = a[0] + a[1] + a[2];
-        sum_b = b[0] + b[1] + b[2];
-        if(sum_a > sum_b)
-        {
-            x = a[0] - b[0];
-            if(x < 0) x = -x;
-            if(x > diff) return false;
-            
-            x = a[1] - b[1];
-            if(x < 0) x = -x;
-            if(x > diff) return false;
-            
-            x = a[2] - b[2];
-            if(x < 0) x = -x;
-            if(x > diff) return false;
-            
-            return true;
-        } else {
-            return false;
+// OpenCL Kernel für Compare und Sortieren
+const char* kernel_code_po1 = R"(
+__kernel void sort_rows(__global uchar* image, const int width, const int height, const int channels, const int diff) {
+    int row_idx = get_global_id(0);
+    if (row_idx >= height) return;
+
+    // Pointer zur aktuellen Zeile
+    __global uchar* row = &image[row_idx * width * channels];
+    
+    // Sortiere die Zeile mit Odd-Even-Sort
+    int sorted = 0;
+    while (!sorted) {
+        sorted = 1;
+        // Odd Phase
+        for (int i = 1; i < width - 1; i += 2) {
+            int sum_a = row[i * channels] + row[i * channels + 1] + row[i * channels + 2];
+            int sum_b = row[(i + 1) * channels] + row[(i + 1) * channels + 1] + row[(i + 1) * channels + 2];
+            if (sum_a > sum_b) {
+                for (int c = 0; c < channels; ++c) {
+                    int x = row[i * channels + c] - row[(i + 1) * channels + c];
+                    if (x < 0) x = -x;
+                    if (x > diff) return; // Abbrechen, wenn Unterschied zu groß ist
+                }
+                for (int c = 0; c < channels; ++c) {
+                    uchar tmp = row[i * channels + c];
+                    row[i * channels + c] = row[(i + 1) * channels + c];
+                    row[(i + 1) * channels + c] = tmp;
+                }
+                sorted = 0;
+            }
+        }
+        // Even Phase
+        for (int i = 0; i < width - 1; i += 2) {
+            int sum_a = row[i * channels] + row[i * channels + 1] + row[i * channels + 2];
+            int sum_b = row[(i + 1) * channels] + row[(i + 1) * channels + 1] + row[(i + 1) * channels + 2];
+            if (sum_a > sum_b) {
+                for (int c = 0; c < channels; ++c) {
+                    int x = row[i * channels + c] - row[(i + 1) * channels + c];
+                    if (x < 0) x = -x;
+                    if (x > diff) return; // Abbrechen, wenn Unterschied zu groß ist
+                }
+                for (int c = 0; c < channels; ++c) {
+                    uchar tmp = row[i * channels + c];
+                    row[i * channels + c] = row[(i + 1) * channels + c];
+                    row[(i + 1) * channels + c] = tmp;
+                }
+                sorted = 0;
+            }
         }
     }
 }
+)";
 
-int preset1(int argc, char const *argv[])
-{
-    try
-    {
-        int width, height, channels, Sortiermethode, diff;
-
-        // Read an image
+int presetOpencl1(int argc, char const* argv[]) {
+    try {
+        int width, height, channels, diff;
         auto image = readImage(argv[2], width, height, channels);
-        std::cout << "Image read successfully! Dimensions: " << width << "x" << height << " Channels: " << channels << std::endl;
-        Sortiermethode = 6;
 
-        std::cout << "Sortieren ." << std::flush;
+        // OpenCL Initialisierung
+        cl_platform_id platform;
+        cl_device_id device;
+        cl_context context;
+        cl_command_queue queue;
+        cl_program program;
+        cl_kernel kernel;
 
-        for (diff = 0; diff < 256; diff++)
-        {
-            for (auto& row : image)
-            {
-                bool changes_made1 = true; // Track if changes are made during sorting
-                //std::cout << 'a' << diff << std::endl;
+        // Plattform und Gerät auswählen
+        clGetPlatformIDs(1, &platform, nullptr);
+        clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 1, &device, nullptr);
+        context = clCreateContext(nullptr, 1, &device, nullptr, nullptr, nullptr);
+        queue = clCreateCommandQueue(context, device, 0, nullptr);
 
-                while (changes_made1)
-                {
-                    changes_made1 = false;
+        // OpenCL Programm erstellen
+        program = clCreateProgramWithSource(context, 1, &kernel_code_po1, nullptr, nullptr);
+        clBuildProgram(program, 1, &device, nullptr, nullptr, nullptr);
 
-                    bool odd_phase_changes;
-                    bool even_phase_changes;
+        kernel = clCreateKernel(program, "sort_rows", nullptr);
 
-                    // Perform the odd phase
-                    {
-                        bool changes_made2 = false;
+        // Bilddaten in OpenCL-Puffer kopieren
+        size_t image_size = width * height * channels;
+        std::vector<unsigned char> image_data(image_size);
+        for (int i = 0; i < height; ++i)
+            for (int j = 0; j < width; ++j)
+                for (int c = 0; c < channels; ++c)
+                    image_data[(i * width + j) * channels + c] = image[i][j][c];
 
-                        // Determine the starting index based on whether it's an odd or even phase
-                        int start_index = true ? 1 : 0;
+        cl_mem buffer = clCreateBuffer(context, CL_MEM_READ_WRITE, image_size, nullptr, nullptr);
+        clEnqueueWriteBuffer(queue, buffer, CL_TRUE, 0, image_size, image_data.data(), 0, nullptr, nullptr);
 
-                        // Iterate through the array in pairs
-                        for (size_t i = start_index; i + 1 < row.size(); i += 2)
-                        {
-                            // If comparison determines the first is greater, swap
-                            if (compare6(row[i], row[i + 1], diff))
-                            {
-                                std::swap(row[i], row[i + 1]);
-                                changes_made2 = true;
-                            }
-                        }
-                        odd_phase_changes = changes_made2;
-                    }
+        // Kernel-Argumente setzen
+        clSetKernelArg(kernel, 0, sizeof(cl_mem), &buffer);
+        clSetKernelArg(kernel, 1, sizeof(int), &width);
+        clSetKernelArg(kernel, 2, sizeof(int), &height);
+        clSetKernelArg(kernel, 3, sizeof(int), &channels);
+        clSetKernelArg(kernel, 4, sizeof(int), &diff);
 
-                    //std::cout << 'b' << std::endl;
+        // Kernel ausführen
+        size_t global_work_size = height;
+        clEnqueueNDRangeKernel(queue, kernel, 1, nullptr, &global_work_size, nullptr, 0, nullptr, nullptr);
 
-                    // Perform the even phase
-                    {
-                        bool changes_made2 = false;
+        // Ergebnisse zurücklesen
+        clEnqueueReadBuffer(queue, buffer, CL_TRUE, 0, image_size, image_data.data(), 0, nullptr, nullptr);
 
-                        // Determine the starting index based on whether it's an odd or even phase
-                        int start_index = false ? 1 : 0;
+        // Bilddaten zurück in das Bildformat konvertieren
+        for (int i = 0; i < height; ++i)
+            for (int j = 0; j < width; ++j)
+                for (int c = 0; c < channels; ++c)
+                    image[i][j][c] = image_data[(i * width + j) * channels + c];
 
-                        // Iterate through the array in pairs
-                        for (size_t i = start_index; i + 1 < row.size(); i += 2)
-                        {
-                            // If comparison determines the first is greater, swap
-                            if (compare6(row[i], row[i + 1], diff))
-                            {
-                                std::swap(row[i], row[i + 1]);
-                                changes_made2 = true;
-                            }
-                        }
-                        even_phase_changes = changes_made2;
-                    }
+        writeImage("outanim_final.png", image, width, height, channels);
 
-                    // Update the flag
-                    changes_made1 = odd_phase_changes || even_phase_changes;
-                }
-            }
-            // Write the modified image
-            writeImage(std::string("outanim_") + std::to_string(diff) + ".png", image, width, height, channels);
-            std::cout << '.' << std::flush;
-        }
-        
-        std::cout << "\nImage written successfully to outanim_[0-255].png!" << std::endl;
+        // Ressourcen freigeben
+        clReleaseMemObject(buffer);
+        clReleaseKernel(kernel);
+        clReleaseProgram(program);
+        clReleaseCommandQueue(queue);
+        clReleaseContext(context);
+
+        std::cout << "Image processing completed with OpenCL!" << std::endl;
 
     } catch (const std::exception& e) {
         std::cerr << e.what() << std::endl;
         return -1;
     }
-
     return 0;
 }
