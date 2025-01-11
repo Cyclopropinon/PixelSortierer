@@ -1,8 +1,9 @@
 #pragma once
 
 #include <iostream>
-#include <vector>
 #include <string>
+#include <thread>
+#include <vector>
 
 #include "lib/stblibs.h"
 #include "oddeven.hpp"
@@ -85,6 +86,17 @@ int Pixelsortierer(int argc, char const *argv[])
 
         std::cout << "Sortierstärke (0 - 255): ";
         std::cin >> diff;
+
+        unsigned int num_threads = std::thread::hardware_concurrency();
+        if (num_threads > 0)
+        {
+            std::cout << "Anz. Kerne detektiert: " << num_threads << std::endl;
+        } else {
+            std::cout << "Keine Kerne detektiert. Bitte Anz. Threads eingeben: ";
+            std::cin >> num_threads;
+            if (num_threads < 1) num_threads = 1;   // sicherheit
+        }
+        
 
         std::cout << "Sortieren ." << std::flush;
 
