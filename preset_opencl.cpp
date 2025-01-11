@@ -65,6 +65,9 @@ int presetOpencl1(int argc, char const* argv[]) {
         int width, height, channels, diff;
         auto image = readImage(argv[2], width, height, channels);
 
+        std::cout << "Image read successfully! Dimensions: " << width << "x" << height << " Channels: " << channels << std::endl;
+        std::cout << "Sortieren ." << std::flush;
+
         // OpenCL Initialisierung
         cl_platform_id platform;
         cl_device_id device;
